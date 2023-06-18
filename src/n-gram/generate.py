@@ -16,7 +16,7 @@ def generate(seed_text, output_tokens):
         dtype=torch.long,
         device=device,
     )
-    for token in range(output_tokens):
+    for _ in range(output_tokens):
         pred = torch.argmax(ngram(seed_tensor)).item()
         seed_sequence.append(pred)
         res.append(pred)

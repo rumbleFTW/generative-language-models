@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
 
 import argparse
 import re
+
 
 from base import *
 
@@ -61,7 +61,9 @@ def train(data, epochs):
 
     t = tqdm(range(epochs))
 
-    for epoch in t:
+    for _ in t:
+        train_loss = 0.0
+        ngram.train()
         for X, y in zip(X_train, y_train):
             X = X.long()
             y_hat = ngram(X)
@@ -71,9 +73,25 @@ def train(data, epochs):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        t.set_description(f"Loss: {loss}")
+            train_loss += loss.item()
+        train_loss /= len(X_train)
 
-    torch.save(ngram.state_dict(), checkpt_path)
+        ngram.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for X, y in zip(X_val, y_val):
+                X = X.long()
+                y_hat = ngram(X)
+                y_hat = y_hat.squeeze(0)
+                y = y.long()
+                loss = F.cross_entropy(y_hat, y)
+                val_loss += loss.item()
+            val_loss /= len(X_val)
+
+        t.set_description(
+            f"Train loss: {train_loss:.3f}; Validation_loss: {val_loss:.3f};"
+        )
+        torch.save(ngram.state_dict(), checkpt_path)
     print(f"Checkpt saved at {checkpt_path}")
 
 
@@ -86,7 +104,7 @@ def generate(seed_text, output_tokens):
         dtype=torch.long,
         device=device,
     )
-    for token in range(output_tokens):
+    for _ in range(output_tokens):
         pred = torch.argmax(ngram(seed_tensor)).item()
         seed_sequence.append(pred)
         res.append(pred)

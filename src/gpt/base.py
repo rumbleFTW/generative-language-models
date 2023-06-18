@@ -1,16 +1,14 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 import json
 
 ### --- Globals
-checkpt_path = "../checkpts/ngram.pt"
-index_path = "../index_tables/ngram.json"
+checkpt_path = "../../checkpts/gpt.pt"
+index_path = "../../index_tables/gpt.json"
 ### --- Hyperparameters
 epochs = 10
 block_size = 8
-batch_size = 4
 split_ratio = 0.8
 output_tokens = 30
 ### ---
