@@ -1,5 +1,7 @@
 # Generative Language Models
 
+![demo](https://github.com/rumbleFTW/generative-language-models/assets/85807431/ba83658b-a786-43bb-b69d-58df344fce3b)
+
 Implementation of various Large Language Models (LLMs) from scratch.
 
 ## Usage
