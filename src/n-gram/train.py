@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
-
 import argparse
 import re
 
@@ -9,24 +8,34 @@ import re
 from base import *
 
 
-def data_loader(sequences, block_size, padding=0):
+def generate_ngrams(sequences, n=2):
+    """
+    Split sequence of tokens `sequences` into n-grams of size `n`.
+    """
     X_data = []
     y_data = []
-    for sentence in sequences:
-        for i in range(1, len(sentence)):
-            if i <= block_size:
-                X = [padding] * (block_size - i) + sentence[:i]
-            else:
-                X = sentence[i - block_size : i]
-            X_data.append(X)
-            y_data.append(sentence[i])
+    for i in range(len(sequences) - n):
+        X_data.append(sequences[i : i + n])
+        y_data.append(sequences[i + n])
+
     return (
         torch.tensor(X_data, dtype=torch.float32, requires_grad=True),
         torch.tensor(y_data),
     )
 
 
+def preprocess_text(raw_text):
+    """
+    Cleans `raw_text`. This can be modified to include/exclude punctuations, special characters and uppercase letters.
+    """
+    raw_text = re.sub(r"[^a-zA-Z ]", " ", raw_text.replace("\n", " ").lower())
+    return re.sub(r"\s{2,}", " ", raw_text)
+
+
 def split(X_data, y_data, ratio):
+    """
+    Split data into training and testing set with ratio `ratio`.
+    """
     split_point = int(len(X_data) * ratio)
 
     X_train = X_data[:split_point]
@@ -39,18 +48,20 @@ def split(X_data, y_data, ratio):
 
 
 def train(data, epochs):
+    """
+    Train the network on `data` for `epochs` number of epochs.
+    """
     print(f"Training on {data} for {epochs} epochs")
     global tokenizer, ngram
     with open(data, "r") as f:
         raw_data = f.read()
 
-    raw_data = re.sub(r"[^a-zA-Z ]", " ", raw_data.replace("\n", "").lower())
-    raw_data_seq = [string.split(" ") for string in raw_data.split(".")]
+    raw_data = preprocess_text(raw_text=raw_data)
     tokenizer = Tokenizer(raw_data.split(" "))
     tokenizer.save(index_path)
+    raw_data_seq = [string.split(" ") for string in raw_data.split(".")]
     sequence = tokenizer.encode(raw_data_seq[0])
-
-    X_data, y_data = data_loader(sequences=[sequence], block_size=block_size)
+    X_data, y_data = generate_ngrams(sequences=sequence, n=n)
 
     X_data, y_data = X_data.to(device=device), y_data.to(device=device)
     X_train, y_train, X_val, y_val = split(X_data, y_data, ratio=split_ratio)
@@ -93,28 +104,6 @@ def train(data, epochs):
         )
         torch.save(ngram.state_dict(), checkpt_path)
     print(f"Checkpt saved at {checkpt_path}")
-
-
-def generate(seed_text, output_tokens):
-    seed_sequence = tokenizer.encode(seed_text.lower().split(" "))
-    res = seed_sequence[:]
-    seed_sequence = [0] * (block_size - len(seed_sequence)) + seed_sequence
-    seed_tensor = torch.tensor(
-        seed_sequence,
-        dtype=torch.long,
-        device=device,
-    )
-    for _ in range(output_tokens):
-        pred = torch.argmax(ngram(seed_tensor)).item()
-        seed_sequence.append(pred)
-        res.append(pred)
-        seed_sequence = seed_sequence[-block_size:]
-        seed_tensor = torch.tensor(
-            seed_sequence,
-            dtype=torch.long,
-            device=device,
-        )
-    print(" ".join(tokenizer.decode(res)))
 
 
 if __name__ == "__main__":

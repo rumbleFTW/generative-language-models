@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 import json
 
 ### --- Globals
@@ -8,7 +7,7 @@ checkpt_path = "../../checkpts/ngram.pt"
 index_path = "../../index_tables/ngram.json"
 ### --- Hyperparameters
 epochs = 10
-block_size = 8
+n = 8
 split_ratio = 0.8
 output_tokens = 30
 ### ---
@@ -32,11 +31,11 @@ class Tokenizer:
             }
 
     def save(self, path):
-        with open(index_path, "w") as table:
+        with open(path, "w") as table:
             json.dump(self.index_table, table)
 
     def load(self, path):
-        with open(index_path, "r") as table:
+        with open(path, "r") as table:
             self.index_table = json.load(table)
             self.index_table_inv = {
                 value: key for key, value in self.index_table.items()
@@ -52,7 +51,7 @@ class Tokenizer:
 
 class NGram(nn.Module):
     """
-    A simple N-gram model with 3 layers: Embedding, a bi-directional LSTM & an output fully-connected layer.
+    A simple neural network with 3 layers: Embedding, a bi-directional LSTM & an output fully-connected layer.
     """
 
     def __init__(self, vocab_size) -> None:

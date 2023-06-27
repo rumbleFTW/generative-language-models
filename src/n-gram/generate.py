@@ -1,16 +1,17 @@
 import torch
-
 import argparse
 import time
-import os
 
 from base import *
 
 
 def generate(seed_text, output_tokens):
+    """
+    Generate `output_tokens` numbers of tokens from seed `seed_text`.
+    """
     seed_sequence = tokenizer.encode(seed_text.lower().split(" "))
     res = seed_sequence[:]
-    seed_sequence = [0] * (block_size - len(seed_sequence)) + seed_sequence
+    seed_sequence = [0] * (n - len(seed_sequence)) + seed_sequence
     seed_tensor = torch.tensor(
         seed_sequence,
         dtype=torch.long,
@@ -20,15 +21,14 @@ def generate(seed_text, output_tokens):
         pred = torch.argmax(ngram(seed_tensor)).item()
         seed_sequence.append(pred)
         res.append(pred)
-        seed_sequence = seed_sequence[-block_size:]
+        seed_sequence = seed_sequence[-n:]
         seed_tensor = torch.tensor(
             seed_sequence,
             dtype=torch.long,
             device=device,
         )
-        print(" ".join(tokenizer.decode(res)))
+        print(" ".join(tokenizer.decode(res)), end="\r")
         time.sleep(0.3)
-        os.system("clear")
 
 
 if __name__ == "__main__":
