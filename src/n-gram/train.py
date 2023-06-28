@@ -47,7 +47,7 @@ def split(X_data, y_data, ratio):
     return X_train, y_train, X_val, y_val
 
 
-def train(data, epochs):
+def train(data, epochs, char_level=False):
     """
     Train the network on `data` for `epochs` number of epochs.
     """
@@ -56,11 +56,14 @@ def train(data, epochs):
     with open(data, "r") as f:
         raw_data = f.read()
 
-    raw_data = preprocess_text(raw_text=raw_data)
-    tokenizer = Tokenizer(raw_data.split(" "))
+    if char_level:
+        tokenizer = Tokenizer(list(raw_data))
+        sequence = tokenizer.encode(list(raw_data))
+    else:
+        raw_data = preprocess_text(raw_text=raw_data)
+        tokenizer = Tokenizer(raw_data.split(" "))
+        sequence = tokenizer.encode(raw_data.split(" "))
     tokenizer.save(index_path)
-    raw_data_seq = [string.split(" ") for string in raw_data.split(".")]
-    sequence = tokenizer.encode(raw_data_seq[0])
     X_data, y_data = generate_ngrams(sequences=sequence, n=n)
 
     X_data, y_data = X_data.to(device=device), y_data.to(device=device)
@@ -110,7 +113,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, help="path to data .txt file")
     parser.add_argument("--epochs", type=int, help="number of epochs to train for")
+    parser.add_argument("--char", action="store_true", help="character level training")
 
     args = parser.parse_args()
 
-    train(data=args.data, epochs=args.epochs)
+    train(data=args.data, epochs=args.epochs, char_level=args.char)

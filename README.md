@@ -27,7 +27,7 @@ cd <model_name>
 4. Train the model:
 
 ```bash
-python train.py --data <path_to_data_file> --epochs <num_epochs>
+python train.py --data <path_to_data_file> --epochs <num_epochs> [optional]--char
 ```
 
 #### **_Models:_**
@@ -39,7 +39,7 @@ The N-Gram model relies on the assumption of Markov property, which states that 
 5. Generate text:
 
 ```bash
-python generate.py --generate --seed_text "<seed_text>" --output_length <output_length>
+python generate.py --generate --seed_text "<seed_text>" --output_length <output_length> [optional]--char
 ```
 
 ## Example
@@ -48,6 +48,8 @@ To train the model on a data file and generate text:
 
 ```bash
 cd n-gram
-python main.py --data data.txt --epochs 10
-python main.py --generate --seed_text "The weather" --output_length 100
+# Optional --char flag to train with character level encoding
+python main.py --data ./data/gita_chap1.txt --epochs 10 --char
+# Optional --char flag to generate at character level
+python main.py --generate --seed_text "The weather" --output_length 100 --char
 ```
