@@ -5,6 +5,8 @@ import argparse
 import re
 
 
+from tokenizer import Tokenizer
+from ngram import NGram
 from base import *
 
 
@@ -47,7 +49,7 @@ def split(X_data, y_data, ratio):
     return X_train, y_train, X_val, y_val
 
 
-def train(data, epochs, char_level=False):
+def train(data, epochs, level="word"):
     """
     Train the network on `data` for `epochs` number of epochs.
     """
@@ -56,13 +58,13 @@ def train(data, epochs, char_level=False):
     with open(data, "r") as f:
         raw_data = f.read()
 
-    if char_level:
-        tokenizer = Tokenizer(list(raw_data))
-        sequence = tokenizer.encode(list(raw_data))
-    else:
-        raw_data = preprocess_text(raw_text=raw_data)
-        tokenizer = Tokenizer(raw_data.split(" "))
-        sequence = tokenizer.encode(raw_data.split(" "))
+    if level == "char":
+        tokenizer = Tokenizer(raw_data, type="char_level")
+        sequence = tokenizer.encode(raw_data)
+    elif level == "word":
+        raw_data = preprocess_text(raw_data)
+        tokenizer = Tokenizer(raw_data, type="word_level")
+        sequence = tokenizer.encode(raw_data)
     tokenizer.save(index_path)
     X_data, y_data = generate_ngrams(sequences=sequence, n=n)
 
@@ -113,8 +115,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, help="path to data .txt file")
     parser.add_argument("--epochs", type=int, help="number of epochs to train for")
-    parser.add_argument("--char", action="store_true", help="character level training")
+    parser.add_argument("--l", type=str, help="level of generation")
 
     args = parser.parse_args()
 
-    train(data=args.data, epochs=args.epochs, char_level=args.char)
+    train(data=args.data, epochs=args.epochs, level=args.l)
