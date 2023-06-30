@@ -1,13 +1,15 @@
 import torch
-import torch.nn.functional as F
-from tqdm import tqdm
 import argparse
-import re
-
 
 from tokenizer import Tokenizer
 from ngram import NGram
-from base import *
+from utils import preprocess_text
+
+
+### --- Globals
+N = 5
+INDEX_PATH = "../../index_tables/ngram.json"
+CHECKPT_PATH = "../../checkpts/ngram.pt"
 
 
 def generate_ngrams(sequences, n=2):
@@ -26,29 +28,6 @@ def generate_ngrams(sequences, n=2):
     )
 
 
-def preprocess_text(raw_text):
-    """
-    Cleans `raw_text`. This can be modified to include/exclude punctuations, special characters and uppercase letters.
-    """
-    raw_text = re.sub(r"[^a-zA-Z ]", " ", raw_text.replace("\n", " ").lower())
-    return re.sub(r"\s{2,}", " ", raw_text)
-
-
-def split(X_data, y_data, ratio):
-    """
-    Split data into training and testing set with ratio `ratio`.
-    """
-    split_point = int(len(X_data) * ratio)
-
-    X_train = X_data[:split_point]
-    y_train = y_data[:split_point]
-
-    X_val = X_data[split_point:]
-    y_val = y_data[split_point:]
-
-    return X_train, y_train, X_val, y_val
-
-
 def train(data, epochs, level="word"):
     """
     Train the network on `data` for `epochs` number of epochs.
@@ -65,50 +44,11 @@ def train(data, epochs, level="word"):
         raw_data = preprocess_text(raw_data)
         tokenizer = Tokenizer(raw_data, type="word_level")
         sequence = tokenizer.encode(raw_data)
-    tokenizer.save(index_path)
-    X_data, y_data = generate_ngrams(sequences=sequence, n=n)
-
-    X_data, y_data = X_data.to(device=device), y_data.to(device=device)
-    X_train, y_train, X_val, y_val = split(X_data, y_data, ratio=split_ratio)
+    tokenizer.save(INDEX_PATH)
+    X_data, y_data = generate_ngrams(sequences=sequence, n=N)
 
     ngram = NGram(vocab_size=tokenizer.vocab_size)
-    ngram = ngram.to(device=device)
-    optimizer = torch.optim.Adam(ngram.parameters())
-
-    t = tqdm(range(epochs))
-
-    for _ in t:
-        train_loss = 0.0
-        ngram.train()
-        for X, y in zip(X_train, y_train):
-            X = X.long()
-            y_hat = ngram(X)
-            y_hat = y_hat.squeeze(0)
-            y = y.long()
-            loss = F.cross_entropy(y_hat, y)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            train_loss += loss.item()
-        train_loss /= len(X_train)
-
-        ngram.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for X, y in zip(X_val, y_val):
-                X = X.long()
-                y_hat = ngram(X)
-                y_hat = y_hat.squeeze(0)
-                y = y.long()
-                loss = F.cross_entropy(y_hat, y)
-                val_loss += loss.item()
-            val_loss /= len(X_val)
-
-        t.set_description(
-            f"Train loss: {train_loss:.3f}; Validation_loss: {val_loss:.3f};"
-        )
-        torch.save(ngram.state_dict(), checkpt_path)
-    print(f"Checkpt saved at {checkpt_path}")
+    ngram.fit(X_data, y_data, checkpt_path=CHECKPT_PATH, epochs=epochs)
 
 
 if __name__ == "__main__":

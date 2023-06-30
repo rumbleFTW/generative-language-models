@@ -39,7 +39,7 @@ The N-Gram model relies on the assumption of Markov property, which states that 
 5. Generate text:
 
 ```bash
-python generate.py --generate --seed_text "<seed_text>" --output_length <output_length> [optional]--char
+python generate.py --generate --seed_text "<seed_text>" --output_length <output_length> --l <level>
 ```
 
 ## Example
@@ -49,7 +49,7 @@ To train the model on a data file and generate text:
 ```bash
 cd n-gram
 # Optional --char flag to train with character level encoding
-python main.py --data ./data/gita_chap1.txt --epochs 10 --char
+python main.py --data ./data/gita_chap1.txt --epochs 10 --l char
 # Optional --char flag to generate at character level
-python main.py --generate --seed_text "The weather" --output_length 100 --char
+python main.py --generate --seed_text "The weather" --output_length 100 --l char
 ```

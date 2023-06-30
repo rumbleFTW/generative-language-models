@@ -6,7 +6,7 @@ class Tokenizer:
     A string level tokenizer. It assigns an index to each string and stores the relation in an inex table.
     """
 
-    def __init__(self, corpus=None, type="word_level"):
+    def __init__(self, corpus: str = None, type: str = "word_level"):
         if corpus:
             if type == "word_level":
                 self.vocab = list(set(corpus.split(" ")))
@@ -19,11 +19,11 @@ class Tokenizer:
             }
         self.type = type
 
-    def save(self, path):
+    def save(self, path: str):
         with open(path, "w") as table:
             json.dump(self.index_table, table)
 
-    def load(self, path):
+    def load(self, path: str):
         with open(path, "r") as table:
             self.index_table = json.load(table)
             self.index_table_inv = {
@@ -31,11 +31,11 @@ class Tokenizer:
             }
             self.vocab_size = len(self.index_table)
 
-    def encode(self, sequence):
+    def encode(self, sequence: iter):
         if self.type == "word_level":
             return [self.index_table[string] for string in sequence.split(" ")]
         elif self.type == "char_level":
             return [self.index_table[string] for string in list(sequence)]
 
-    def decode(self, sequence):
+    def decode(self, sequence: iter):
         return [self.index_table_inv[token] for token in sequence]
