@@ -1,7 +1,7 @@
 from typing import List
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torch.utils.data import TensorDataset, DataLoader
 import torch.optim as optim
 import json
 from tqdm import tqdm
@@ -13,10 +13,10 @@ class SkipGramNet(nn.Module):
     Neural network that learns the embedding matrix.
     """
 
-    def __init__(self, vocab_size: int, embedding_dim: int) -> None:
+    def __init__(self, vocab_size: int, d_model: int) -> None:
         super(SkipGramNet, self).__init__()
-        self.inp = nn.Linear(vocab_size, embedding_dim, dtype=torch.float32)
-        self.emb = nn.Linear(embedding_dim, vocab_size, dtype=torch.float32)
+        self.inp = nn.Linear(vocab_size, d_model, dtype=torch.float32)
+        self.emb = nn.Linear(d_model, vocab_size, dtype=torch.float32)
 
     def forward(self, x: torch.Tensor):
         o1 = self.inp(x)
@@ -30,16 +30,19 @@ class SkipGram:
     Skipgram implementation with SkipGramNet handling APIs.
     """
 
-    def __init__(self, embedding_dim: int, context_size: int) -> None:
+    def __init__(self, d_model: int, context_size: int) -> None:
         self.context_size = context_size
-        self.embedding_dim = embedding_dim
+        self.d_model = d_model
         self.net = None
 
-    def fit(self, corpus: List[str], epochs: int, device: str = "cpu"):
+    def fit(
+        self, corpus: List[str], epochs: int, batch_size: int = 32, device: str = "cpu"
+    ):
         self.vocab = list(set(corpus))
+        self.batch_size = batch_size
         self.vocab_size = len(self.vocab)
         self.index_table = {string: idx for idx, string in enumerate(self.vocab)}
-        self.net = SkipGramNet(self.vocab_size, self.embedding_dim)
+        self.net = SkipGramNet(self.vocab_size, self.d_model)
 
         X_train = []
         y_train = []
@@ -57,6 +60,8 @@ class SkipGram:
                 y[context] = 1
                 X_train.append(X)
                 y_train.append(y)
+            print(contexts, X_train, y_train)
+            exit()
 
         X_train, y_train = torch.tensor(X_train, dtype=torch.float32), torch.tensor(
             y_train, dtype=torch.float32
@@ -67,22 +72,23 @@ class SkipGram:
 
         self.net = self.net.to(device)
 
-        optimizer = optim.Adam(self.net.parameters())
+        optimizer = optim.Adam(self.net.parameters(), lr=0.01)
         t = tqdm(range(epochs))
+        dataset = DataLoader(
+            TensorDataset(X_train, y_train), batch_size=self.batch_size, shuffle=True
+        )
         for _ in t:
             train_loss = 0.0
             self.net.train()
-            for X, y in zip(X_train, y_train):
-                y_hat = self.net(X)
-                y_hat = y_hat.squeeze(0)
-                y = y.long()
-                loss = torch.nn.functional.nll_loss(y_hat, y)
+            for X, y in dataset:
                 optimizer.zero_grad()
+                y_hat = self.net(X)
+                loss = torch.nn.CrossEntropyLoss()(y_hat, y)
                 loss.backward()
                 optimizer.step()
                 train_loss += loss.item()
-                t.set_description(f"Train loss: {loss:.3f}")
-            train_loss /= len(X_train)
+            train_loss /= len(dataset)
+            t.set_description(f"Train loss: {loss:.3f}")
 
         embedding_matrix = self.net.state_dict()["emb.weight"].data
 
