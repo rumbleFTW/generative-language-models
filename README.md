@@ -1,8 +1,12 @@
-# Generative Language Models
+# N-gram
 
 ![demo](https://github.com/rumbleFTW/generative-language-models/assets/85807431/ba83658b-a786-43bb-b69d-58df344fce3b)
 
-Implementation of various Large Language Models (LLMs) from scratch.
+Implementation of n-gram from scratch.
+
+The N-Gram language model is a statistical language model widely used in natural language processing and computational linguistics. It predicts the probability of a word or sequence of words based on the previous N-1 words in a given text. The "N" in N-Gram refers to the number of words or tokens considered in the context. For example, a 3-Gram model predicts the next word based on the previous two words.
+
+The N-Gram model relies on the assumption of Markov property, which states that the probability of a word only depends on a fixed number of preceding words, irrespective of the entire history. This assumption allows for efficient estimation of probabilities and simplifies the modeling process.
 
 ## Usage
 
@@ -29,12 +33,6 @@ cd <model_name>
 ```bash
 python train.py --data <path_to_data_file> --epochs <num_epochs> [optional]--char
 ```
-
-#### **_Models:_**
-
-- N-Gram model: The N-Gram language model is a statistical language model widely used in natural language processing and computational linguistics. It predicts the probability of a word or sequence of words based on the previous N-1 words in a given text. The "N" in N-Gram refers to the number of words or tokens considered in the context. For example, a 3-Gram model predicts the next word based on the previous two words.
-
-The N-Gram model relies on the assumption of Markov property, which states that the probability of a word only depends on a fixed number of preceding words, irrespective of the entire history. This assumption allows for efficient estimation of probabilities and simplifies the modeling process.
 
 5. Generate text:
 
