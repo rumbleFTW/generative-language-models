@@ -60,8 +60,6 @@ class SkipGram:
                 y[context] = 1
                 X_train.append(X)
                 y_train.append(y)
-            print(contexts, X_train, y_train)
-            exit()
 
         X_train, y_train = torch.tensor(X_train, dtype=torch.float32), torch.tensor(
             y_train, dtype=torch.float32
